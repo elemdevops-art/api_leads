@@ -44,12 +44,19 @@ uvicorn leads_backend.api:app --reload
 - `GET /health`
 - `GET /api/v1/leads?city=CURITIBA&state=PR&cnae=4711302`
 - `GET /api/v1/leads?city=CURITIBA&state=PR&cnae=4711302&include_secondary_cnae=true`
+- `GET /api/v1/leads?city=CURITIBA&city=COLOMBO&state=PR&cnae=4711302&cnae=4711301`
 
-Parâmetros: `city`, `state`, `cnae`, `include_secondary_cnae`, `active_only`, `page` e `page_size` (máximo 500). A API retorna estabelecimentos; redes com várias filiais podem aparecer em mais de uma linha, cada uma com seu próprio CNPJ.
+Os parâmetros `city` e `cnae` aceitam vários valores: repita o parâmetro na URL (`city=CURITIBA&city=COLOMBO`) ou informe valores separados por vírgula (`city=CURITIBA,COLOMBO`). Quando `include_secondary_cnae=true`, qualquer CNAE informado pode corresponder ao principal ou aos secundários. `state` continua sendo uma única UF. Os demais parâmetros são `include_secondary_cnae`, `active_only`, `page` e `page_size` (máximo 500). A API retorna estabelecimentos; redes com várias filiais podem aparecer em mais de uma linha, cada uma com seu próprio CNPJ.
+
+### Acesso com token
+
+O endpoint de leads exige o cabeçalho `X-API-Key`. Configure `LEADS_API_TOKEN` no ambiente antes de iniciar a API. Para testar localmente no CMD, gere um token forte com `python -c "import secrets; print(secrets.token_urlsafe(32))"`, defina-o com `set LEADS_API_TOKEN=SEU_TOKEN` e inicie o servidor no mesmo CMD. Na Vercel, cadastre `LEADS_API_TOKEN` como variável do tipo Secret no projeto e faça um novo deploy. Em `/docs`, use **Authorize** para informar o token. `/health` permanece público.
+
+Não envie o token como parâmetro de URL. Clientes de servidor devem transmiti-lo no cabeçalho `X-API-Key`; não coloque esse segredo diretamente em um frontend público, pois visitantes poderiam extraí-lo.
 
 ## Publicar na Vercel
 
-O `index.py` exporta a aplicação FastAPI e `vercel.json` inclui o banco filtrado no pacote da função. No projeto da Vercel, conecte o repositório `elem-ecossistema/dados_leads`, habilite Git LFS nas configurações Git e publique a branch `main`. Depois, valide `/health` e `/docs` no domínio gerado. Atualizações do banco exigem uma nova versão no Git LFS e uma nova implantação.
+O `index.py` exporta a aplicação FastAPI e `vercel.json` inclui o banco filtrado no pacote da função. O projeto atual usa o repositório `elemdevops-art/api_leads`, branch `main`. O banco `data/leads_rmc.duckdb` é armazenado como arquivo Git normal, não como objeto Git LFS. Depois de cada atualização, valide `/health`, `/docs` e uma consulta em `/api/v1/leads` no domínio da Vercel.
 
 ## Fonte e convenções
 
